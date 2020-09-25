@@ -3,28 +3,26 @@ import {left} from 'fp-ts/lib/Either';
 import {withHeaders} from '../src/combinators/headers';
 import * as appy from '../src/index';
 
-afterEach(() => {
-  fetchMock.reset();
-});
-
 test('withHeaders() should set provided headers on `Req`', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
   const request = withHeaders({'Content-Type': 'application/json'})(
-    appy.request
+    appy.request(fetch)
   );
 
   await request('http://localhost/api/resources')();
 
-  expect(fetchMock.lastOptions()).toEqual({
+  expect(fetch.lastOptions()).toEqual({
     headers: new Headers({'Content-Type': 'application/json'})
   });
 });
 
 test('withHeaders() should merge provided headers with `Req` ones', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
-  const request = withHeaders({'Content-Type': 'application/json'})(appy.get);
+  const request = withHeaders({'Content-Type': 'application/json'})(
+    appy.get(fetch)
+  );
 
   await request([
     'http://localhost/api/resources',
@@ -36,7 +34,7 @@ test('withHeaders() should merge provided headers with `Req` ones', async () => 
     }
   ])();
 
-  expect(fetchMock.lastOptions()).toEqual({
+  expect(fetch.lastOptions()).toEqual({
     headers: new Headers({
       'Content-Type': 'application/json',
       Authorization: 'Bearer TOKEN'
@@ -46,35 +44,35 @@ test('withHeaders() should merge provided headers with `Req` ones', async () => 
 });
 
 test('withHeaders() should merge provided headers with `Req` ones - as Headers object', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
 
-  const request = withHeaders(headers)(appy.request);
+  const request = withHeaders(headers)(appy.request(fetch));
 
   await request('http://localhost/api/resources')();
 
-  expect(fetchMock.lastOptions()).toEqual({headers});
+  expect(fetch.lastOptions()).toEqual({headers});
 });
 
 test('withHeaders() should merge provided headers with `Req` ones - as array of strings', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
   const headers = [['Content-Type', 'application/json']];
-  const request = withHeaders(headers)(appy.request);
+  const request = withHeaders(headers)(appy.request(fetch));
 
   await request('http://localhost/api/resources')();
 
-  expect(fetchMock.lastOptions()).toEqual({
+  expect(fetch.lastOptions()).toEqual({
     headers: new Headers({'Content-Type': 'application/json'})
   });
 });
 
 test('withHeaders() should fail if provided headers has forbidden name', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
-  const request = withHeaders({'=': 'asdasd'})(appy.request);
+  const request = withHeaders({'=': 'asdasd'})(appy.request(fetch));
 
   const result = await request('http://localhost/api/resources')();
 
@@ -86,5 +84,5 @@ test('withHeaders() should fail if provided headers has forbidden name', async (
     })
   );
 
-  expect(fetchMock.called()).toBe(false);
+  expect(fetch.called()).toBe(false);
 });

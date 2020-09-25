@@ -7,15 +7,13 @@ import {failure} from 'io-ts/lib/PathReporter';
 import {Decoder, toDecoder, withDecoder} from '../src/combinators/decoder';
 import * as appy from '../src/index';
 
-afterEach(() => {
-  fetchMock.reset();
-});
-
 test('withDecoder() should decodes `Resp` with provided decoder', async () => {
   const response = new Response('{"id": 1234, "name": "foo bar"}');
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const request = withDecoder(decoderOK)(appy.get);
+  const request = withDecoder(decoderOK)(appy.get(fetch));
 
   const result = await request('http://localhost/api/resources')();
 
@@ -29,9 +27,11 @@ test('withDecoder() should decodes `Resp` with provided decoder', async () => {
 
 test('withDecoder() should decodes `Resp` with provided decoder - response data is empty string', async () => {
   const response = new Response('');
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const request = withDecoder(decoderOK)(appy.get);
+  const request = withDecoder(decoderOK)(appy.get(fetch));
 
   const result = await request('http://localhost/api/resources')();
 
@@ -45,9 +45,12 @@ test('withDecoder() should decodes `Resp` with provided decoder - response data 
 
 test('withDecoder() should decodes `Resp` with provided decoder - response data is an object', async () => {
   const response = new Response();
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
   const request = pipe(
+    fetch,
     appy.get,
     RTE.map(resp => ({
       response: resp.response,
@@ -68,9 +71,12 @@ test('withDecoder() should decodes `Resp` with provided decoder - response data 
 
 test('withDecoder() should decodes `Resp` with provided decoder - response data stringified', async () => {
   const response = new Response();
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
   const request = pipe(
+    fetch,
     appy.get,
     RTE.map(resp => ({
       response: resp.response,
@@ -91,9 +97,11 @@ test('withDecoder() should decodes `Resp` with provided decoder - response data 
 
 test('withDecoder() should fail if response data cannot be parsed', async () => {
   const response = new Response('{some: "bad", json: true}');
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const request = withDecoder(decoderOK)(appy.get);
+  const request = withDecoder(decoderOK)(appy.get(fetch));
 
   const result = await request('http://localhost/api/resources')();
 
@@ -108,9 +116,11 @@ test('withDecoder() should fail if response data cannot be parsed', async () => 
 
 test('withDecoder() should fail if decoding fails', async () => {
   const response = new Response('{"id": 1234, "name": "foo bar"}');
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const request = withDecoder(decoderKO)(appy.get);
+  const request = withDecoder(decoderKO)(appy.get(fetch));
 
   const result = await request('http://localhost/api/resources')();
 

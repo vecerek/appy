@@ -2,19 +2,17 @@ import fetchMock from 'fetch-mock';
 import {right, left} from 'fp-ts/lib/Either';
 import * as appy from '../src/index';
 
-afterEach(() => {
-  fetchMock.reset();
-});
-
 test('request() should return a right `Resp<string>` - default GET', async () => {
   const response = new Response('a list of resources', {
     status: 200,
     headers: {}
   });
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.request('http://localhost/api/resources')();
+  const r = await appy.request(fetch)('http://localhost/api/resources')();
 
   expect(r).toEqual(right({response, data: 'a list of resources'}));
 });
@@ -22,9 +20,11 @@ test('request() should return a right `Resp<string>` - default GET', async () =>
 test('request() should return a right `Resp<string>` - with POST', async () => {
   const response = new Response('POST - a list of resources', {status: 200});
 
-  fetchMock.post('http://localhost/api/post-resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .post('http://localhost/api/post-resources', response);
 
-  const r = await appy.request([
+  const r = await appy.request(fetch)([
     'http://localhost/api/post-resources',
     {method: 'POST', body: ''}
   ])();
@@ -35,9 +35,11 @@ test('request() should return a right `Resp<string>` - with POST', async () => {
 test('request() should return a left `RequestError` when request fails', async () => {
   const error = new TypeError('Network error');
 
-  fetchMock.mock('http://localhost/api/resources', {throws: error});
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', {throws: error});
 
-  const r1 = await appy.request('http://localhost/api/resources')();
+  const r1 = await appy.request(fetch)('http://localhost/api/resources')();
 
   expect(r1).toEqual(
     left({
@@ -47,7 +49,7 @@ test('request() should return a left `RequestError` when request fails', async (
     })
   );
 
-  const r2 = await appy.request([
+  const r2 = await appy.request(fetch)([
     'http://localhost/api/resources',
     {method: 'GET', headers: {'X-Some-Header': 'some value'}}
   ])();
@@ -69,9 +71,11 @@ test('request() should return a left `ResponseError` when response status is not
     status: 503
   });
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.request('http://localhost/api/resources')();
+  const r = await appy.request(fetch)('http://localhost/api/resources')();
 
   expect(r).toEqual(
     left({
@@ -85,71 +89,80 @@ test('request() should return a left `ResponseError` when response status is not
 test('get() should run a GET request', async () => {
   const response = new Response('a list of resources');
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.get('http://localhost/api/resources')();
+  const r = await appy.get(fetch)('http://localhost/api/resources')();
 
   expect(r).toEqual(right({response, data: 'a list of resources'}));
 
-  expect(fetchMock.called('http://localhost/api/resources', 'GET')).toBe(true);
+  expect(fetch.called('http://localhost/api/resources', 'GET')).toBe(true);
 });
 
 test('post() should run a POST request', async () => {
   const response = new Response('a list of resources');
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.post([
+  const r = await appy.post(fetch)([
     'http://localhost/api/resources',
     {body: 'foo'}
   ])();
 
   expect(r).toEqual(right({response, data: 'a list of resources'}));
 
-  expect(fetchMock.called('http://localhost/api/resources', 'POST')).toBe(true);
+  expect(fetch.called('http://localhost/api/resources', 'POST')).toBe(true);
 });
 
 test('put() should run a PUT request', async () => {
   const response = new Response('a list of resources');
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.put(['http://localhost/api/resources', {body: 'foo'}])();
-
-  expect(r).toEqual(right({response, data: 'a list of resources'}));
-
-  expect(fetchMock.called('http://localhost/api/resources', 'PUT')).toBe(true);
-});
-
-test('patch() should run a PATCH request', async () => {
-  const response = new Response('a list of resources');
-
-  fetchMock.mock('http://localhost/api/resources', response);
-
-  const r = await appy.patch([
+  const r = await appy.put(fetch)([
     'http://localhost/api/resources',
     {body: 'foo'}
   ])();
 
   expect(r).toEqual(right({response, data: 'a list of resources'}));
 
-  expect(fetchMock.called('http://localhost/api/resources', 'PATCH')).toBe(
-    true
-  );
+  expect(fetch.called('http://localhost/api/resources', 'PUT')).toBe(true);
+});
+
+test('patch() should run a PATCH request', async () => {
+  const response = new Response('a list of resources');
+
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
+
+  const r = await appy.patch(fetch)([
+    'http://localhost/api/resources',
+    {body: 'foo'}
+  ])();
+
+  expect(r).toEqual(right({response, data: 'a list of resources'}));
+
+  expect(fetch.called('http://localhost/api/resources', 'PATCH')).toBe(true);
 });
 
 test('del() should run a DELETE request', async () => {
   const response = new Response('');
 
-  fetchMock.mock('http://localhost/api/resources', response);
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response);
 
-  const r = await appy.del('http://localhost/api/resources')();
+  const r = await appy.del(fetch)('http://localhost/api/resources')();
 
   expect(r).toEqual(right({response, data: ''}));
 
-  expect(fetchMock.called('http://localhost/api/resources', 'DELETE')).toBe(
-    true
-  );
+  expect(fetch.called('http://localhost/api/resources', 'DELETE')).toBe(true);
 });
 
 test('toRequestError() should return a RequestError', () => {

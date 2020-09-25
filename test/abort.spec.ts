@@ -3,16 +3,12 @@ import {left, right} from 'fp-ts/lib/Either';
 import {withCancel, withTimeout} from '../src/combinators/abort';
 import * as appy from '../src/index';
 
-afterEach(() => {
-  fetchMock.reset();
-});
-
 test('withCancel() should set signal on `Req` and make request abortable', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200);
+  const fetch = fetchMock.sandbox().mock('http://localhost/api/resources', 200);
 
   const controller = new AbortController();
 
-  const request = withCancel(controller)(appy.request);
+  const request = withCancel(controller)(appy.request(fetch));
 
   controller.abort();
 
@@ -33,9 +29,11 @@ test('withTimeout() should succeed if we get a response within provided millisec
     headers: {}
   });
 
-  fetchMock.mock('http://localhost/api/resources', response, {delay: 500});
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', response, {delay: 500});
 
-  const request = withTimeout(1000)(appy.request);
+  const request = withTimeout(1000)(appy.request(fetch));
 
   const result = await request('http://localhost/api/resources')();
 
@@ -43,9 +41,11 @@ test('withTimeout() should succeed if we get a response within provided millisec
 });
 
 test('withTimeout() should fail if we do not get a response within provided milliseconds', async () => {
-  fetchMock.mock('http://localhost/api/resources', 200, {delay: 1000});
+  const fetch = fetchMock
+    .sandbox()
+    .mock('http://localhost/api/resources', 200, {delay: 1000});
 
-  const request = withTimeout(500)(appy.request);
+  const request = withTimeout(500)(appy.request(fetch));
 
   const result = await request('http://localhost/api/resources')();
 

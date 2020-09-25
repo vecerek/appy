@@ -83,6 +83,11 @@ export interface ResponseError {
   response: Response;
 }
 
+type Fetch = (
+  input: RequestInfo,
+  init?: RequestInit | undefined
+) => Promise<Response>;
+
 /**
  * Makes a request using `fetch()` under the hood.
  *
@@ -107,7 +112,7 @@ export interface ResponseError {
  * @category creators
  * @since 3.0.0
  */
-export const request: Req<string> = input => () => {
+export const request: (fetch: Fetch) => Req<string> = fetch => input => () => {
   const reqInput = normalizeReqInput(input);
 
   return fetch(...reqInput)
@@ -137,7 +142,8 @@ export const request: Req<string> = input => () => {
  * @category creators
  * @since 3.0.0
  */
-export const get: Req<string> = pipe(request, local(setMethod('GET')));
+export const get: (fetch: Fetch) => Req<string> = fetch =>
+  pipe(fetch, request, local(setMethod('GET')));
 
 /**
  * Makes a request with the `method` set to `POST`.
@@ -145,7 +151,8 @@ export const get: Req<string> = pipe(request, local(setMethod('GET')));
  * @category creators
  * @since 3.0.0
  */
-export const post: Req<string> = pipe(request, local(setMethod('POST')));
+export const post: (fetch: Fetch) => Req<string> = fetch =>
+  pipe(fetch, request, local(setMethod('POST')));
 
 /**
  * Makes a request with the `method` set to `PUT`.
@@ -153,7 +160,8 @@ export const post: Req<string> = pipe(request, local(setMethod('POST')));
  * @category creators
  * @since 3.0.0
  */
-export const put: Req<string> = pipe(request, local(setMethod('PUT')));
+export const put: (fetch: Fetch) => Req<string> = fetch =>
+  pipe(fetch, request, local(setMethod('PUT')));
 
 /**
  * Makes a request with the `method` set to `PATCH`.
@@ -161,7 +169,8 @@ export const put: Req<string> = pipe(request, local(setMethod('PUT')));
  * @category creators
  * @since 3.0.0
  */
-export const patch: Req<string> = pipe(request, local(setMethod('PATCH')));
+export const patch: (fetch: Fetch) => Req<string> = fetch =>
+  pipe(fetch, request, local(setMethod('PATCH')));
 
 /**
  * Makes a request with the `method` set to `DELETE`.
@@ -169,7 +178,8 @@ export const patch: Req<string> = pipe(request, local(setMethod('PATCH')));
  * @category creators
  * @since 3.0.0
  */
-export const del: Req<string> = pipe(request, local(setMethod('DELETE')));
+export const del: (fetch: Fetch) => Req<string> = fetch =>
+  pipe(fetch, request, local(setMethod('DELETE')));
 
 /**
  * Creates a `RequestError` object.
